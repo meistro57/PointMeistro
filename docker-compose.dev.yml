@@ -1,0 +1,32 @@
+# Development overrides — adds live reload for all services
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+# OR:    ./dev.sh
+
+services:
+  app:
+    build:
+      dockerfile: Dockerfile.dev
+    command: sh -c "php artisan optimize:clear && php-fpm"
+
+  segmenter:
+    volumes:
+      - ./storage:/storage
+      - ./models:/models
+      - ./python-segmenter:/app
+    command: python3 -m uvicorn segment:app --host 0.0.0.0 --port 8001 --reload --reload-dir /app
+
+  vite:
+    image: node:20-alpine
+    container_name: pointmeistro-vite
+    working_dir: /app
+    volumes:
+      - ./laravel-app:/app
+      - vite-node-modules:/app/node_modules
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "5173:5173"
+    networks:
+      - pointmeistro
+
+volumes:
+  vite-node-modules:
