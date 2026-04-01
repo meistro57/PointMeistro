@@ -41,8 +41,18 @@ This runs `docker-compose.yml` + `docker-compose.dev.yml` together.
 | Config / .env | Run `clear_cache` tool or `./dev.sh` restart |
 | Horizon workers | Use `restart_service horizon` tool |
 
-## MCP Tools Available
-The MCP server (`mcp-server/server.py`) is registered in `.mcp.json`.
+## MCP Setup
+The MCP server (`mcp-server/server.py`) is registered in `.mcp.json` (project-level)
+and in `~/.claude.json` (local scope, already active for this project).
+
+To verify it's running: `claude mcp list` — should show `pointmeistro: ✓ Connected`
+
+If you're on a new machine or it shows disconnected:
+```bash
+pip3 install mcp --break-system-packages
+claude mcp add --scope local pointmeistro python3 -- /home/mark/PointMeistro/mcp-server/server.py
+```
+
 Claude has direct access to the running stack via these tools:
 
 | Tool | What it does |
