@@ -67,12 +67,21 @@ Claude has direct access to the running stack via these tools:
 | `restart_service <svc>` | Restart horizon / reverb / nginx |
 | `composer <cmd>` | Run composer in app container |
 
+## Known Gotchas
+
+- **Always use `./dev.sh`** — running plain `docker compose up` omits the Vite container,
+  which means no HMR and the app throws `Vite manifest not found`.
+- **`REDIS_CLIENT` must be `predis`** — the app container does not have the `phpredis` PHP
+  extension. `predis/predis` is installed; `.env` is set to `predis`.
+- **`.env` is partially overridden by docker-compose.yml** — DB and Redis host/port come
+  from container env vars, not `.env`. Edit docker-compose.yml for those.
+
 ## Project Layout
 ```
 PointMeistro/
 ├── laravel-app/        # Laravel 13 application
-│   ├── app/            # Models, Controllers, Jobs, etc. (to be built)
-│   ├── resources/      # Blade views, JS, CSS
+│   ├── app/Http/Controllers/   # DashboardController, ScanController
+│   ├── resources/views/        # layouts/app.blade.php, dashboard, scans/
 │   ├── routes/         # web.php, api.php
 │   └── database/       # Migrations, factories, seeders
 ├── python-segmenter/   # FastAPI GPU segmentation service
