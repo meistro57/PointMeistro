@@ -1,0 +1,81 @@
+# PointMeistro - Point Cloud Segmentation for Steel Fabrication
+# Laravel 13 + Python GPU Segmentation Service
+
+# Laravel
+/laravel-app/vendor/
+/laravel-app/node_modules/
+/laravel-app/.env
+/laravel-app/.env.backup
+/laravel-app/.env.production
+/laravel-app/.phpunit.result.cache
+/laravel-app/Homestead.json
+/laravel-app/Homestead.yaml
+/laravel-app/auth.json
+/laravel-app/npm-debug.log
+/laravel-app/yarn-error.log
+/laravel-app/.DS_Store
+/laravel-app/bootstrap/cache/*
+/laravel-app/storage/framework/cache/*
+/laravel-app/storage/framework/sessions/*
+/laravel-app/storage/framework/views/*
+/laravel-app/storage/logs/*
+/laravel-app/public/hot
+/laravel-app/public/storage
+
+# Python
+/python-segmenter/__pycache__/
+/python-segmenter/*.py[cod]
+/python-segmenter/*$py.class
+/python-segmenter/.pytest_cache/
+/python-segmenter/.venv/
+/python-segmenter/venv/
+
+# Storage (user data - never commit)
+/storage/scans/
+/storage/segmented/
+!/storage/.gitkeep
+
+# Models (trained PointNet++ models - large files)
+/models/*.pth
+/models/*.pt
+/models/*.onnx
+!/models/.gitkeep
+!/models/README.md
+
+# Docker
+/.docker-sync/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Database
+*.sql
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/

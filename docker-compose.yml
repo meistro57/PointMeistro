@@ -1,0 +1,157 @@
+services:
+  # Laravel Application
+  app:
+    build:
+      context: ./laravel-app
+      dockerfile: Dockerfile
+    container_name: pointmeistro-app
+    volumes:
+      - ./laravel-app:/var/www/html
+      - ./storage:/var/www/html/storage/app/public
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=pointmeistro
+      - DB_USERNAME=meistro
+      - DB_PASSWORD=steel_scans_2026
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=null
+      - REDIS_PORT=6379
+      - QUEUE_CONNECTION=redis
+      - BROADCAST_DRIVER=reverb
+      - REVERB_HOST=reverb
+      - REVERB_PORT=8080
+      - PYTHON_SEGMENTER_URL=http://segmenter:8001
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - pointmeistro
+
+  # Laravel Horizon (Queue Worker Dashboard)
+  horizon:
+    build:
+      context: ./laravel-app
+      dockerfile: Dockerfile
+    container_name: pointmeistro-horizon
+    command: php artisan horizon
+    volumes:
+      - ./laravel-app:/var/www/html
+    environment:
+      - APP_ENV=local
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_DATABASE=pointmeistro
+      - DB_USERNAME=meistro
+      - DB_PASSWORD=steel_scans_2026
+      - REDIS_HOST=redis
+      - QUEUE_CONNECTION=redis
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - pointmeistro
+    restart: unless-stopped
+
+  # Laravel Reverb (WebSocket Server)
+  reverb:
+    build:
+      context: ./laravel-app
+      dockerfile: Dockerfile
+    container_name: pointmeistro-reverb
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+    volumes:
+      - ./laravel-app:/var/www/html
+    environment:
+      - APP_ENV=local
+      - REVERB_HOST=0.0.0.0
+      - REVERB_PORT=8080
+      - REVERB_APP_ID=pointmeistro
+      - REVERB_APP_KEY=local-key
+      - REVERB_APP_SECRET=local-secret
+    ports:
+      - "8080:8080"
+    networks:
+      - pointmeistro
+    restart: unless-stopped
+
+  # Python Segmentation Service (GPU)
+  segmenter:
+    build:
+      context: ./python-segmenter
+      dockerfile: Dockerfile
+    container_name: pointmeistro-segmenter
+    volumes:
+      - ./storage:/storage
+      - ./models:/models
+    environment:
+      - MODEL_PATH=/models/concrete_steel_segmentation.pth
+      - CUDA_VISIBLE_DEVICES=0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - pointmeistro
+    restart: unless-stopped
+
+  # PostgreSQL 16
+  postgres:
+    image: postgres:16
+    container_name: pointmeistro-db
+    environment:
+      - POSTGRES_DB=pointmeistro
+      - POSTGRES_USER=meistro
+      - POSTGRES_PASSWORD=steel_scans_2026
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - pointmeistro
+    restart: unless-stopped
+
+  # Redis 7
+  redis:
+    image: redis:7-alpine
+    container_name: pointmeistro-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - pointmeistro
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: pointmeistro-nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./laravel-app/public:/var/www/html/public
+      - ./storage:/storage
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - app
+      - segmenter
+    networks:
+      - pointmeistro
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  redis-data:
+
+networks:
+  pointmeistro:
+    driver: bridge
